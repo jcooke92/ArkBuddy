@@ -13,7 +13,7 @@ using System.Reflection.Emit;
 using System.Diagnostics;
 using IniParser.Model;
 using IniParser;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+using System.IO;
 
 namespace ArkBuddy
 {
@@ -21,9 +21,11 @@ namespace ArkBuddy
     {
         public const string ARK_PROCESS_NAME = "ArkAscendedServer";
         public static volatile bool autoStartUpdateEnabled = false;
+        public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
         public Color BAD_COLOUR = Color.Crimson;
         public Thread autoStartUpdateThread = null;
+
         public IniData serverConfigData = null;
         public const string INI_SERVER_SECTION = "ServerConfig";
         public const string INI_SERVER_NAME = "ServerName";
@@ -36,14 +38,15 @@ namespace ArkBuddy
         public const string INI_RCON_PORT = "RCONPort";
         public const string INI_RCON_PASSWORD = "RCONPassword";
 
+        public const string SAVE_SETTINGS_INI = ".\\ArkBuddySettings.ini";
+        public const string INI_SETTINGS = "Settings";
+
         public Form1()
         {
-            Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File("ark_buddy_log-.txt", rollingInterval: RollingInterval.Day).CreateLogger();
+            string logName = $"logs/ark_buddy_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+            Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File(logName).CreateLogger();
             Log.Information("Log initialized");
             InitializeComponent();
-            labelRunningCommand.Visible = false;
-            Thread serverStatusThread = new Thread(() => { monitorServerProcess(); }){ IsBackground = true };
-            serverStatusThread.Start();
         }
         public bool IsProcessRunning(string processName)
         {
@@ -71,6 +74,108 @@ namespace ArkBuddy
                     Log.Error($"Exception during check server status: {ex.StackTrace}");
                 }
             }
+        }
+
+        public bool isOnlyWhiteSpace(string filePath)
+        {
+            if (!File.Exists(filePath)) return false;
+            string content = File.ReadAllText(filePath);
+            return string.IsNullOrWhiteSpace(content);
+        }
+
+        public bool loadSettings()
+        {
+            var success = false;
+            try
+            {
+                var parser = new FileIniDataParser();
+                IniData settings = new IniData();
+                if (File.Exists(SAVE_SETTINGS_INI))
+                {
+                    try
+                    {
+                        settings = parser.ReadFile(SAVE_SETTINGS_INI);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Exception during settings INI read - INI file may be corrupted: {ex.StackTrace}");
+                    }
+                }
+
+                foreach (Control control in tableLayoutPanelFilePaths.Controls)
+                {
+                    if (control is TextBox)
+                    {
+                        try
+                        {
+                            control.Text = settings[INI_SETTINGS][control.Name];
+                        }
+                        catch(Exception innerex)
+                        {
+                            Log.Error($"Exception reading : {innerex.StackTrace}");
+                        }
+                    }
+                }
+
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Exception settings INI load: {ex.StackTrace}");
+            }
+
+            if (!success)
+            {
+                Log.Error($"Failed to load settings from {SAVE_SETTINGS_INI}");
+            }
+
+            return success;
+        }
+
+        public bool saveSettings()
+        {
+            var success = false;
+            try
+            {
+                var parser = new FileIniDataParser();
+                IniData settings = new IniData();
+                if(File.Exists(SAVE_SETTINGS_INI))
+                {
+                    try
+                    {
+                        settings = parser.ReadFile(SAVE_SETTINGS_INI);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Exception during settings INI read - INI file may be corrupted: {ex.StackTrace}");
+                    }
+                }
+
+                foreach (Control control in tableLayoutPanelFilePaths.Controls)
+                {
+                    if(control is TextBox)
+                    {
+                        if(!string.IsNullOrWhiteSpace(control.Text) && control.Text != "None")
+                        {
+                            settings[INI_SETTINGS][control.Name] = control.Text;
+                        }
+                    }
+                }
+
+                parser.WriteFile(SAVE_SETTINGS_INI, settings);
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Exception during settings INI save: {ex.StackTrace}");
+            }
+
+            if(!success)
+            {
+                Log.Error($"Failed to save settings to {SAVE_SETTINGS_INI}");
+            }
+
+            return success;
         }
 
         public bool readServerConfigIni()
@@ -321,12 +426,14 @@ namespace ArkBuddy
         {
             var selectedFolder = selectFolder("Select server folder");
             textBoxServerFolder.Text = string.IsNullOrWhiteSpace(selectedFolder) ? "None" : selectedFolder;
+            saveSettings();
         }
 
         private void buttonMcRconFolderSelect_Click(object sender, EventArgs e)
         { 
             var selectedFolder = selectFolder("Select RCON folder");
             textBoxRconFolder.Text = string.IsNullOrWhiteSpace(selectedFolder) ? "None": selectedFolder;
+            saveSettings();
 
         }
 
@@ -334,15 +441,14 @@ namespace ArkBuddy
         {
             var selectedFolder = selectFolder("Select steamcmd folder");
             textBoxSteamCmdFolder.Text = string.IsNullOrWhiteSpace(selectedFolder) ? "None" : selectedFolder;
-
-
+            saveSettings();
         }
 
         private void buttonBackupFolderSelect_Click(object sender, EventArgs e)
         {
             var selectedFolder = selectFolder("Select backup folder");
             textBoxBackupFolder.Text = string.IsNullOrWhiteSpace(selectedFolder) ? "None" : selectedFolder;
-
+            saveSettings();
         }
 
         private void buttonServerConfigINISelect_Click(object sender, EventArgs e)
@@ -350,10 +456,14 @@ namespace ArkBuddy
             var selectedFile = selectFile("INI files (*.ini)|*.ini|All files (*.*)|*.*");
             textBoxServerConfigINI.Text = string.IsNullOrWhiteSpace(selectedFile) ? "None" : selectedFile;
             var success = readServerConfigIni();
-            if(!success) 
+            if(success) 
+            {
+                saveSettings();
+            }
+            else
             {
                 textBoxServerConfigINI.Text = "None";
-                MessageBox.Show("Error parsing server config INI", "INI Error", MessageBoxButtons.OK, MessageBoxIcon.Error); 
+                MessageBox.Show("Error parsing server config INI", "INI Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -374,6 +484,25 @@ namespace ArkBuddy
             {
                 MessageBox.Show("Error saving+exit server", "Save+exit error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            labelRunningCommand.Visible = false;
+            Thread serverStatusThread = new Thread(() => { monitorServerProcess(); }) { IsBackground = true };
+            serverStatusThread.Start();
+            loadSettings();
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            Log.CloseAndFlush();
+            base.OnFormClosed(e);
+        }
+
+        private void buttonExit_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }

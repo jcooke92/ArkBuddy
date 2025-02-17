@@ -56,7 +56,7 @@
             this.labelServerProcess = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.labelAutoBackup = new System.Windows.Forms.Label();
-            this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.tableLayoutPanelFilePaths = new System.Windows.Forms.TableLayoutPanel();
             this.buttonServerConfigINISelect = new System.Windows.Forms.Button();
             this.textBoxServerConfigINI = new System.Windows.Forms.TextBox();
             this.buttonBackupFolderSelect = new System.Windows.Forms.Button();
@@ -66,9 +66,11 @@
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.labelRunningCommand = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
+            this.buttonExit = new System.Windows.Forms.Button();
             this.flowLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
-            this.tableLayoutPanel2.SuspendLayout();
+            this.tableLayoutPanelFilePaths.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -225,7 +227,7 @@
             this.flowLayoutPanel1.Location = new System.Drawing.Point(10, 429);
             this.flowLayoutPanel1.Margin = new System.Windows.Forms.Padding(0);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(1481, 197);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(1195, 197);
             this.flowLayoutPanel1.TabIndex = 12;
             // 
             // buttonOpenRcon
@@ -421,40 +423,40 @@
             this.labelAutoBackup.TabIndex = 22;
             this.labelAutoBackup.Text = "Enabled";
             // 
-            // tableLayoutPanel2
+            // tableLayoutPanelFilePaths
             // 
-            this.tableLayoutPanel2.AutoSize = true;
-            this.tableLayoutPanel2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.tableLayoutPanel2.ColumnCount = 3;
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel2.Controls.Add(this.buttonServerConfigINISelect, 2, 4);
-            this.tableLayoutPanel2.Controls.Add(this.textBoxServerConfigINI, 1, 4);
-            this.tableLayoutPanel2.Controls.Add(this.buttonBackupFolderSelect, 2, 3);
-            this.tableLayoutPanel2.Controls.Add(this.buttonMcRconFolderSelect, 2, 1);
-            this.tableLayoutPanel2.Controls.Add(this.label1, 0, 0);
-            this.tableLayoutPanel2.Controls.Add(this.textBoxServerFolder, 1, 0);
-            this.tableLayoutPanel2.Controls.Add(this.buttonSteamCmdFolderSelect, 2, 2);
-            this.tableLayoutPanel2.Controls.Add(this.buttonServerFolderSelect, 2, 0);
-            this.tableLayoutPanel2.Controls.Add(this.label2, 0, 1);
-            this.tableLayoutPanel2.Controls.Add(this.textBoxBackupFolder, 1, 3);
-            this.tableLayoutPanel2.Controls.Add(this.textBoxRconFolder, 1, 1);
-            this.tableLayoutPanel2.Controls.Add(this.label4, 0, 3);
-            this.tableLayoutPanel2.Controls.Add(this.label3, 0, 2);
-            this.tableLayoutPanel2.Controls.Add(this.textBoxSteamCmdFolder, 1, 2);
-            this.tableLayoutPanel2.Controls.Add(this.label10, 0, 4);
-            this.tableLayoutPanel2.Location = new System.Drawing.Point(10, 15);
-            this.tableLayoutPanel2.Name = "tableLayoutPanel2";
-            this.tableLayoutPanel2.RowCount = 5;
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(804, 360);
-            this.tableLayoutPanel2.TabIndex = 23;
+            this.tableLayoutPanelFilePaths.AutoSize = true;
+            this.tableLayoutPanelFilePaths.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.tableLayoutPanelFilePaths.ColumnCount = 3;
+            this.tableLayoutPanelFilePaths.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanelFilePaths.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanelFilePaths.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanelFilePaths.Controls.Add(this.buttonServerConfigINISelect, 2, 4);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.textBoxServerConfigINI, 1, 4);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.buttonBackupFolderSelect, 2, 3);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.buttonMcRconFolderSelect, 2, 1);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.label1, 0, 0);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.textBoxServerFolder, 1, 0);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.buttonSteamCmdFolderSelect, 2, 2);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.buttonServerFolderSelect, 2, 0);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.label2, 0, 1);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.textBoxBackupFolder, 1, 3);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.textBoxRconFolder, 1, 1);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.label4, 0, 3);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.label3, 0, 2);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.textBoxSteamCmdFolder, 1, 2);
+            this.tableLayoutPanelFilePaths.Controls.Add(this.label10, 0, 4);
+            this.tableLayoutPanelFilePaths.Location = new System.Drawing.Point(10, 15);
+            this.tableLayoutPanelFilePaths.Name = "tableLayoutPanelFilePaths";
+            this.tableLayoutPanelFilePaths.RowCount = 5;
+            this.tableLayoutPanelFilePaths.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanelFilePaths.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanelFilePaths.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanelFilePaths.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanelFilePaths.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanelFilePaths.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanelFilePaths.Size = new System.Drawing.Size(804, 360);
+            this.tableLayoutPanelFilePaths.TabIndex = 23;
             // 
             // buttonServerConfigINISelect
             // 
@@ -563,29 +565,55 @@
             this.labelRunningCommand.TabIndex = 27;
             this.labelRunningCommand.Text = "Running command...";
             // 
+            // label11
+            // 
+            this.label11.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.label11.Location = new System.Drawing.Point(1256, 410);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(5, 220);
+            this.label11.TabIndex = 28;
+            this.label11.Text = "label11";
+            // 
+            // buttonExit
+            // 
+            this.buttonExit.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.buttonExit.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonExit.Location = new System.Drawing.Point(1302, 429);
+            this.buttonExit.Margin = new System.Windows.Forms.Padding(10);
+            this.buttonExit.Name = "buttonExit";
+            this.buttonExit.Padding = new System.Windows.Forms.Padding(10);
+            this.buttonExit.Size = new System.Drawing.Size(159, 197);
+            this.buttonExit.TabIndex = 14;
+            this.buttonExit.Text = "Exit";
+            this.buttonExit.UseVisualStyleBackColor = true;
+            this.buttonExit.Click += new System.EventHandler(this.buttonExit_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1500, 983);
+            this.Controls.Add(this.label11);
             this.Controls.Add(this.labelRunningCommand);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.tableLayoutPanel2);
+            this.Controls.Add(this.tableLayoutPanelFilePaths);
             this.Controls.Add(this.tableLayoutPanel1);
+            this.Controls.Add(this.buttonExit);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.richTextBoxOutputLog);
             this.Controls.Add(this.flowLayoutPanel1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form1";
             this.Text = "ArkBuddy";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.flowLayoutPanel1.ResumeLayout(false);
             this.flowLayoutPanel1.PerformLayout();
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
-            this.tableLayoutPanel2.ResumeLayout(false);
-            this.tableLayoutPanel2.PerformLayout();
+            this.tableLayoutPanelFilePaths.ResumeLayout(false);
+            this.tableLayoutPanelFilePaths.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -620,7 +648,7 @@
         private System.Windows.Forms.Label labelAutoBackup;
         private System.Windows.Forms.Label labelServerProcess;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanelFilePaths;
         private System.Windows.Forms.Button buttonBackupFolderSelect;
         private System.Windows.Forms.Button buttonMcRconFolderSelect;
         private System.Windows.Forms.Label label6;
@@ -630,6 +658,8 @@
         private System.Windows.Forms.TextBox textBoxServerConfigINI;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label labelRunningCommand;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Button buttonExit;
     }
 }
 
