@@ -24,6 +24,7 @@ namespace ArkBuddy
         public Color BAD_COLOUR = Color.Crimson;
         public Thread autoStartUpdateThread = null;
         public IniData serverConfigData = null;
+        public const string INI_SERVER_SECTION = "ServerConfig";
         public const string INI_SERVER_NAME = "ServerName";
         public const string INI_SERVER_PASSWORD = "ServerPassword";
         public const string INI_SERVER_MAP = "ServerMap";
@@ -31,6 +32,8 @@ namespace ArkBuddy
         public const string INI_BATTLEYE = "Battleye";
         public const string INI_SERVER_PORT = "ServerPort";
         public const string INI_QUERY_PORT = "QueryPort";
+        public const string INI_RCON_PORT = "RCONPort";
+        public const string INI_RCON_PASSWORD = "RCONPassword";
 
         public Form1()
         {
@@ -42,6 +45,7 @@ namespace ArkBuddy
         }
         public bool IsProcessRunning(string processName)
         {
+            Log.Information($"Checking if {processName} is running");
             var processes = Process.GetProcessesByName(processName);
             return processes.Length > 0;
         }
@@ -88,20 +92,94 @@ namespace ArkBuddy
             return success;
         }
 
-        public void saveExit()
+        public void startServer()
         {
-            var task = Task.Run(() =>
+
+        }
+
+        public bool saveExit()
+        {
+            Log.Information("Saving+exiting server...");
+            string rconExePath = textBoxRconFolder.Text;
+            var success = false;
+            try
             {
-                string rconExePath = null;
-                textBoxRconFolder.Invoke((Action)(() =>
+                var task = Task.Run(() =>
                 {
-                    rconExePath = textBoxRconFolder.Text;
-                }));
+                    Log.Information("Constructing RCON command for server SAVE");
+                    var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
+                    var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
+                    var process = new Process();
+                    process.StartInfo.FileName = $"{rconExePath}\\mcrcon.exe";
+                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} SaveWorld";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+                    bool finishedInTime = process.WaitForExit(30_000);
 
+                    if(finishedInTime && process.ExitCode == 0)
+                    {
+                        Log.Information($"Server save successful");
+                    }
+                    else
+                    {
+                        Log.Error($"Server save timed out");
+                        process.Kill();
+                        Log.Debug($"Server save output: {output}");
+                        Log.Debug($"Server save error: {error}");
+                        return;
+                    }
 
+                    Log.Information("Constructing RCON command for server EXIT");
+                    port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
+                    password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
+                    process = new Process();
+                    process.StartInfo.FileName = $"{rconExePath}\\mcrcon.exe";
+                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} DoExit";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    output = process.StandardOutput.ReadToEnd();
+                    error = process.StandardError.ReadToEnd();
+                    finishedInTime = process.WaitForExit(30_000);
 
-            });
-            task.Wait();
+                    if(finishedInTime && process.ExitCode == 0)
+                    {
+                        Log.Information($"Server exit command successful");
+                        Thread.Sleep(15_000);
+                    }
+                    else
+                    {
+                        Log.Error($"Server exit command timed out");
+                        process.Kill();
+                        Log.Debug($"Server exit output: {output}");
+                        Log.Debug($"Server exit error: {error}");
+                    }
+
+                    if(IsProcessRunning(ARK_PROCESS_NAME))
+                    {
+                        Log.Error($"{ARK_PROCESS_NAME} still running :(");
+                    }
+                    else
+                    {
+                        Log.Information($"{ARK_PROCESS_NAME} is NOT running :)");
+                        success = true;
+                    }
+
+                });
+                task.Wait(60_000);
+            }
+            catch(Exception ex)
+            {
+                Log.Error($"Exception save+exit server: {ex.StackTrace}");
+            }
+            return success;
         }
 
         public void autoStartUpdate()
@@ -252,6 +330,15 @@ namespace ArkBuddy
         private void buttonToggleAutoBackup_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void buttonSaveExit_Click(object sender, EventArgs e)
+        {
+            var success = saveExit();
+            if (!success)
+            {
+                MessageBox.Show("Error saving+exit server", "Save+exit error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

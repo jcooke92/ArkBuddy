@@ -57,14 +57,14 @@
             this.label9 = new System.Windows.Forms.Label();
             this.labelAutoBackup = new System.Windows.Forms.Label();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
+            this.buttonServerConfigINISelect = new System.Windows.Forms.Button();
+            this.textBoxServerConfigINI = new System.Windows.Forms.TextBox();
             this.buttonBackupFolderSelect = new System.Windows.Forms.Button();
             this.buttonMcRconFolderSelect = new System.Windows.Forms.Button();
+            this.label10 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
-            this.textBoxServerConfigINI = new System.Windows.Forms.TextBox();
-            this.buttonServerConfigINISelect = new System.Windows.Forms.Button();
             this.flowLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
@@ -160,6 +160,7 @@
             this.buttonSaveExit.TabIndex = 8;
             this.buttonSaveExit.Text = "Save Server+Exit";
             this.buttonSaveExit.UseVisualStyleBackColor = true;
+            this.buttonSaveExit.Click += new System.EventHandler(this.buttonSaveExit_Click);
             // 
             // buttonBackupServer
             // 
@@ -453,6 +454,32 @@
             this.tableLayoutPanel2.Size = new System.Drawing.Size(804, 360);
             this.tableLayoutPanel2.TabIndex = 23;
             // 
+            // buttonServerConfigINISelect
+            // 
+            this.buttonServerConfigINISelect.AutoSize = true;
+            this.buttonServerConfigINISelect.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.buttonServerConfigINISelect.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.buttonServerConfigINISelect.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonServerConfigINISelect.Location = new System.Drawing.Point(696, 298);
+            this.buttonServerConfigINISelect.Margin = new System.Windows.Forms.Padding(10);
+            this.buttonServerConfigINISelect.Name = "buttonServerConfigINISelect";
+            this.buttonServerConfigINISelect.Padding = new System.Windows.Forms.Padding(5);
+            this.buttonServerConfigINISelect.Size = new System.Drawing.Size(98, 52);
+            this.buttonServerConfigINISelect.TabIndex = 21;
+            this.buttonServerConfigINISelect.Text = "Select";
+            this.buttonServerConfigINISelect.UseVisualStyleBackColor = true;
+            this.buttonServerConfigINISelect.Click += new System.EventHandler(this.buttonServerConfigINISelect_Click);
+            // 
+            // textBoxServerConfigINI
+            // 
+            this.textBoxServerConfigINI.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.textBoxServerConfigINI.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxServerConfigINI.Location = new System.Drawing.Point(263, 306);
+            this.textBoxServerConfigINI.Name = "textBoxServerConfigINI";
+            this.textBoxServerConfigINI.Size = new System.Drawing.Size(420, 35);
+            this.textBoxServerConfigINI.TabIndex = 20;
+            this.textBoxServerConfigINI.Text = "None";
+            // 
             // buttonBackupFolderSelect
             // 
             this.buttonBackupFolderSelect.AutoSize = true;
@@ -485,6 +512,17 @@
             this.buttonMcRconFolderSelect.UseVisualStyleBackColor = true;
             this.buttonMcRconFolderSelect.Click += new System.EventHandler(this.buttonMcRconFolderSelect_Click);
             // 
+            // label10
+            // 
+            this.label10.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.Location = new System.Drawing.Point(3, 304);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(254, 40);
+            this.label10.TabIndex = 19;
+            this.label10.Text = "Server Config INI";
+            // 
             // label6
             // 
             this.label6.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
@@ -511,43 +549,6 @@
             this.label8.Size = new System.Drawing.Size(5, 370);
             this.label8.TabIndex = 26;
             this.label8.Text = "label8";
-            // 
-            // label10
-            // 
-            this.label10.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(3, 304);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(254, 40);
-            this.label10.TabIndex = 19;
-            this.label10.Text = "Server Config INI";
-            // 
-            // textBoxServerConfigINI
-            // 
-            this.textBoxServerConfigINI.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.textBoxServerConfigINI.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBoxServerConfigINI.Location = new System.Drawing.Point(263, 306);
-            this.textBoxServerConfigINI.Name = "textBoxServerConfigINI";
-            this.textBoxServerConfigINI.Size = new System.Drawing.Size(420, 35);
-            this.textBoxServerConfigINI.TabIndex = 20;
-            this.textBoxServerConfigINI.Text = "None";
-            // 
-            // buttonServerConfigINISelect
-            // 
-            this.buttonServerConfigINISelect.AutoSize = true;
-            this.buttonServerConfigINISelect.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.buttonServerConfigINISelect.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            this.buttonServerConfigINISelect.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonServerConfigINISelect.Location = new System.Drawing.Point(696, 298);
-            this.buttonServerConfigINISelect.Margin = new System.Windows.Forms.Padding(10);
-            this.buttonServerConfigINISelect.Name = "buttonServerConfigINISelect";
-            this.buttonServerConfigINISelect.Padding = new System.Windows.Forms.Padding(5);
-            this.buttonServerConfigINISelect.Size = new System.Drawing.Size(98, 52);
-            this.buttonServerConfigINISelect.TabIndex = 21;
-            this.buttonServerConfigINISelect.Text = "Select";
-            this.buttonServerConfigINISelect.UseVisualStyleBackColor = true;
-            this.buttonServerConfigINISelect.Click += new System.EventHandler(this.buttonServerConfigINISelect_Click);
             // 
             // Form1
             // 
