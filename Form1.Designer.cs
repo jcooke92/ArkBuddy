@@ -65,6 +65,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
+            this.labelRunningCommand = new System.Windows.Forms.Label();
             this.flowLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
@@ -451,6 +452,7 @@
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.Size = new System.Drawing.Size(804, 360);
             this.tableLayoutPanel2.TabIndex = 23;
             // 
@@ -550,11 +552,23 @@
             this.label8.TabIndex = 26;
             this.label8.Text = "label8";
             // 
+            // labelRunningCommand
+            // 
+            this.labelRunningCommand.AutoSize = true;
+            this.labelRunningCommand.Font = new System.Drawing.Font("Segoe UI", 48F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.labelRunningCommand.ForeColor = System.Drawing.Color.ForestGreen;
+            this.labelRunningCommand.Location = new System.Drawing.Point(487, 359);
+            this.labelRunningCommand.Name = "labelRunningCommand";
+            this.labelRunningCommand.Size = new System.Drawing.Size(618, 86);
+            this.labelRunningCommand.TabIndex = 27;
+            this.labelRunningCommand.Text = "Running command...";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1500, 983);
+            this.Controls.Add(this.labelRunningCommand);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
@@ -615,6 +629,7 @@
         private System.Windows.Forms.Button buttonServerConfigINISelect;
         private System.Windows.Forms.TextBox textBoxServerConfigINI;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Label labelRunningCommand;
     }
 }
 

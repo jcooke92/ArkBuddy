@@ -13,6 +13,7 @@ using System.Reflection.Emit;
 using System.Diagnostics;
 using IniParser.Model;
 using IniParser;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace ArkBuddy
 {
@@ -40,6 +41,7 @@ namespace ArkBuddy
             Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File("ark_buddy_log-.txt", rollingInterval: RollingInterval.Day).CreateLogger();
             Log.Information("Log initialized");
             InitializeComponent();
+            labelRunningCommand.Visible = false;
             Thread serverStatusThread = new Thread(() => { monitorServerProcess(); }){ IsBackground = true };
             serverStatusThread.Start();
         }
@@ -56,7 +58,7 @@ namespace ArkBuddy
             {
                 try
                 {
-                    Thread.Sleep(500);
+                    Thread.Sleep(1_000);
                     labelServerProcess.Invoke((Action)(() =>
                     {
                         var serverRunning = IsProcessRunning(ARK_PROCESS_NAME);
@@ -97,14 +99,40 @@ namespace ArkBuddy
 
         }
 
+        public void setComponentsEnabled(Control parent, bool enabled=true)
+        {
+            foreach (Control control in parent.Controls)
+            {
+                if(ReferenceEquals(control, labelRunningCommand)) { continue; }
+                control.Enabled = enabled;
+                if (control.HasChildren)
+                {
+                    setComponentsEnabled(control, enabled); // Recursively handle nested controls
+                }
+            }
+        }
+
+        public void disableAllComponents()
+        {
+            setComponentsEnabled(this, false);
+            labelRunningCommand.Visible = true;
+        }
+
+        public void enableAllComponents()
+        {
+            setComponentsEnabled(this, true);
+            labelRunningCommand.Visible = false;
+        }
+
         public bool saveExit()
         {
             Log.Information("Saving+exiting server...");
+            disableAllComponents();
             string rconExePath = textBoxRconFolder.Text;
             var success = false;
-            try
+            var task = Task.Run(() =>
             {
-                var task = Task.Run(() =>
+                try
                 {
                     Log.Information("Constructing RCON command for server SAVE");
                     var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
@@ -121,14 +149,15 @@ namespace ArkBuddy
                     string error = process.StandardError.ReadToEnd();
                     bool finishedInTime = process.WaitForExit(30_000);
 
-                    if(finishedInTime && process.ExitCode == 0)
+                    if (finishedInTime && process.ExitCode == 0)
                     {
                         Log.Information($"Server save successful");
                     }
                     else
                     {
                         Log.Error($"Server save timed out");
-                        process.Kill();
+                        if (!process.HasExited)
+                            process.Kill();
                         Log.Debug($"Server save output: {output}");
                         Log.Debug($"Server save error: {error}");
                         return;
@@ -149,20 +178,26 @@ namespace ArkBuddy
                     error = process.StandardError.ReadToEnd();
                     finishedInTime = process.WaitForExit(30_000);
 
-                    if(finishedInTime && process.ExitCode == 0)
+                    if (finishedInTime && process.ExitCode == 0)
                     {
                         Log.Information($"Server exit command successful");
-                        Thread.Sleep(15_000);
                     }
                     else
                     {
                         Log.Error($"Server exit command timed out");
-                        process.Kill();
+                        if (!process.HasExited)
+                            process.Kill();
                         Log.Debug($"Server exit output: {output}");
                         Log.Debug($"Server exit error: {error}");
                     }
 
-                    if(IsProcessRunning(ARK_PROCESS_NAME))
+                    Stopwatch processTimer = Stopwatch.StartNew();
+                    while (IsProcessRunning(ARK_PROCESS_NAME) && processTimer.Elapsed.TotalSeconds < 15)
+                    {
+                        Thread.Sleep(500);
+                    }
+
+                    if (IsProcessRunning(ARK_PROCESS_NAME))
                     {
                         Log.Error($"{ARK_PROCESS_NAME} still running :(");
                     }
@@ -171,14 +206,20 @@ namespace ArkBuddy
                         Log.Information($"{ARK_PROCESS_NAME} is NOT running :)");
                         success = true;
                     }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception save+exit server: {ex.StackTrace}");
+                }
+            });
 
-                });
-                task.Wait(60_000);
-            }
-            catch(Exception ex)
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
             {
-                Log.Error($"Exception save+exit server: {ex.StackTrace}");
+                Application.DoEvents();
             }
+            enableAllComponents();
+
             return success;
         }
 
@@ -212,23 +253,20 @@ namespace ArkBuddy
         {
             try
             {
-                labelAutoStartUpdate.Invoke((Action)(() =>
+                disableAllComponents();
+                var enable = labelAutoStartUpdate.Text.Contains("Disabled");
+                if (enable) 
                 {
-                    buttonToggleAutoStartUpdate.Enabled = false;
-                    var enable = labelAutoStartUpdate.Text.Contains("Disabled");
-                    if (enable) 
-                    {
-                        labelAutoStartUpdate.Text = "Enabled";
-                        labelAutoStartUpdate.ForeColor = GOOD_COLOUR;
-                        autoStartUpdate(); 
-                    } 
-                    else 
-                    {
-                        labelAutoStartUpdate.Text = "Disabled";
-                        labelAutoStartUpdate.ForeColor = BAD_COLOUR;
-                        stopAutoStartUpdate();
-                    }
-                }));
+                    labelAutoStartUpdate.Text = "Enabled";
+                    labelAutoStartUpdate.ForeColor = GOOD_COLOUR;
+                    autoStartUpdate(); 
+                } 
+                else 
+                {
+                    labelAutoStartUpdate.Text = "Disabled";
+                    labelAutoStartUpdate.ForeColor = BAD_COLOUR;
+                    stopAutoStartUpdate();
+                }
             }
             catch(Exception ex)
             {
@@ -236,10 +274,7 @@ namespace ArkBuddy
             }
             finally
             {
-                buttonToggleAutoStartUpdate.Invoke((Action)(() =>
-                {
-                    buttonToggleAutoStartUpdate.Enabled = true;
-                }));
+                enableAllComponents();
             }
         }
 
