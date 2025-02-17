@@ -16,16 +16,19 @@ namespace ArkBuddy
 {
     public partial class Form1: Form
     {
-        const string ARK_PROCESS_NAME = "ArkAscendedServer";
-        Color GOOD_COLOUR = Color.ForestGreen;
-        Color BAD_COLOUR = Color.Crimson;
+        public const string ARK_PROCESS_NAME = "ArkAscendedServer";
+        public static volatile bool autoStartUpdateEnabled = false;
+        public Color GOOD_COLOUR = Color.ForestGreen;
+        public Color BAD_COLOUR = Color.Crimson;
+        public Thread autoStartUpdateThread = null;
 
         public Form1()
         {
             Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File("ark_buddy_log-.txt", rollingInterval: RollingInterval.Day).CreateLogger();
             Log.Information("Log initialized");
             InitializeComponent();
-            ThreadPool.QueueUserWorkItem(_ => monitorServerProcess());
+            Thread serverStatusThread = new Thread(() => { monitorServerProcess(); }){ IsBackground = true };
+            serverStatusThread.Start();
         }
         public bool IsProcessRunning(string processName)
         {
@@ -52,6 +55,86 @@ namespace ArkBuddy
                     Log.Error($"Exception during check server status: {ex.StackTrace}");
                 }
             }
+        }
+
+        public void saveExit()
+        {
+            var task = Task.Run(() =>
+            {
+                string rconExePath = null;
+                textBoxRconFolder.Invoke((Action)(() =>
+                {
+                    rconExePath = textBoxRconFolder.Text;
+                }));
+
+            });
+            task.Wait();
+        }
+
+        public void autoStartUpdate()
+        {
+            while(autoStartUpdateEnabled)
+            {
+
+            }
+        }
+
+        public void startAutoStartUpdate()
+        {
+            autoStartUpdateThread = new Thread(() => { autoStartUpdate(); }) { IsBackground = true };
+            autoStartUpdateThread.Start();
+        }
+
+        public void stopAutoStartUpdate()
+        {
+            autoStartUpdateEnabled = false;
+            if(autoStartUpdateThread != null && autoStartUpdateThread.IsAlive)
+            {
+                if(!autoStartUpdateThread.Join(5000))
+                {
+                    Log.Error("Exceeded timeout while waiting for AutoStartUpdate thread to complete");
+                }
+            }
+        }
+
+        public void toggleAutoStartUpdate()
+        {
+            try
+            {
+                labelAutoStartUpdate.Invoke((Action)(() =>
+                {
+                    buttonToggleAutoStartUpdate.Enabled = false;
+                    var enable = labelAutoStartUpdate.Text.Contains("Disabled");
+                    if (enable) 
+                    {
+                        labelAutoStartUpdate.Text = "Enabled";
+                        labelAutoStartUpdate.ForeColor = GOOD_COLOUR;
+                        autoStartUpdate(); 
+                    } 
+                    else 
+                    {
+                        labelAutoStartUpdate.Text = "Disabled";
+                        labelAutoStartUpdate.ForeColor = BAD_COLOUR;
+                        stopAutoStartUpdate();
+                    }
+                }));
+            }
+            catch(Exception ex)
+            {
+                Log.Error($"Exception during toggle auto start+update: {ex.StackTrace}");
+            }
+            finally
+            {
+                buttonToggleAutoStartUpdate.Invoke((Action)(() =>
+                {
+                    buttonToggleAutoStartUpdate.Enabled = true;
+                }));
+            }
+        }
+
+        public void toggleAutoBackup()
+        {
+
         }
 
         public string selectFolder(string description="Select folder")
@@ -120,6 +203,16 @@ namespace ArkBuddy
         {
             var selectedFile = selectFile("INI files (*.ini)|*.ini|All files (*.*)|*.*");
             textBoxServerConfigINI.Text = string.IsNullOrWhiteSpace(selectedFile) ? "None" : selectedFile;
+        }
+
+        private void buttonToggleAutoStartUpdate_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void buttonToggleAutoBackup_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

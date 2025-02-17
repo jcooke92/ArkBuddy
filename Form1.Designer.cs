@@ -332,6 +332,7 @@
             this.buttonToggleAutoStartUpdate.TabIndex = 20;
             this.buttonToggleAutoStartUpdate.Text = "Toggle AutoStartUpdate";
             this.buttonToggleAutoStartUpdate.UseVisualStyleBackColor = true;
+            this.buttonToggleAutoStartUpdate.Click += new System.EventHandler(this.buttonToggleAutoStartUpdate_Click);
             // 
             // buttonToggleAutoBackup
             // 
@@ -347,6 +348,7 @@
             this.buttonToggleAutoBackup.TabIndex = 21;
             this.buttonToggleAutoBackup.Text = "Toggle AutoBackup";
             this.buttonToggleAutoBackup.UseVisualStyleBackColor = true;
+            this.buttonToggleAutoBackup.Click += new System.EventHandler(this.buttonToggleAutoBackup_Click);
             // 
             // labelAutoStartUpdate
             // 
