@@ -11,6 +11,8 @@ using Serilog;
 using System.Threading;
 using System.Reflection.Emit;
 using System.Diagnostics;
+using IniParser.Model;
+using IniParser;
 
 namespace ArkBuddy
 {
@@ -21,6 +23,14 @@ namespace ArkBuddy
         public Color GOOD_COLOUR = Color.ForestGreen;
         public Color BAD_COLOUR = Color.Crimson;
         public Thread autoStartUpdateThread = null;
+        public IniData serverConfigData = null;
+        public const string INI_SERVER_NAME = "ServerName";
+        public const string INI_SERVER_PASSWORD = "ServerPassword";
+        public const string INI_SERVER_MAP = "ServerMap";
+        public const string INI_MODS_LIST = "ModsList";
+        public const string INI_BATTLEYE = "Battleye";
+        public const string INI_SERVER_PORT = "ServerPort";
+        public const string INI_QUERY_PORT = "QueryPort";
 
         public Form1()
         {
@@ -57,6 +67,27 @@ namespace ArkBuddy
             }
         }
 
+        public bool readServerConfigIni()
+        {
+            var success = false;
+            try
+            {
+                var parser = new FileIniDataParser();
+                string filePath = null;
+                textBoxServerConfigINI.Invoke((Action)(() =>
+                {
+                    filePath = textBoxServerConfigINI.Text;
+                }));
+                serverConfigData = parser.ReadFile(filePath);
+                success = serverConfigData != null && !string.IsNullOrWhiteSpace(serverConfigData.ToString());
+            }
+            catch(Exception ex)
+            {
+                Log.Error($"Exception server config INI read: {ex.StackTrace}");
+            }
+            return success;
+        }
+
         public void saveExit()
         {
             var task = Task.Run(() =>
@@ -66,6 +97,8 @@ namespace ArkBuddy
                 {
                     rconExePath = textBoxRconFolder.Text;
                 }));
+
+
 
             });
             task.Wait();
@@ -203,6 +236,12 @@ namespace ArkBuddy
         {
             var selectedFile = selectFile("INI files (*.ini)|*.ini|All files (*.*)|*.*");
             textBoxServerConfigINI.Text = string.IsNullOrWhiteSpace(selectedFile) ? "None" : selectedFile;
+            var success = readServerConfigIni();
+            if(!success) 
+            {
+                textBoxServerConfigINI.Text = "None";
+                MessageBox.Show("Error parsing server config INI", "INI Error", MessageBoxButtons.OK, MessageBoxIcon.Error); 
+            }
         }
 
         private void buttonToggleAutoStartUpdate_Click(object sender, EventArgs e)
