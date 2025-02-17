@@ -324,7 +324,7 @@
             this.buttonToggleAutoStartUpdate.AutoSize = true;
             this.buttonToggleAutoStartUpdate.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.buttonToggleAutoStartUpdate.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonToggleAutoStartUpdate.Location = new System.Drawing.Point(11, 52);
+            this.buttonToggleAutoStartUpdate.Location = new System.Drawing.Point(11, 124);
             this.buttonToggleAutoStartUpdate.Margin = new System.Windows.Forms.Padding(10);
             this.buttonToggleAutoStartUpdate.Name = "buttonToggleAutoStartUpdate";
             this.buttonToggleAutoStartUpdate.Padding = new System.Windows.Forms.Padding(10);
@@ -339,7 +339,7 @@
             this.buttonToggleAutoBackup.AutoSize = true;
             this.buttonToggleAutoBackup.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.buttonToggleAutoBackup.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.buttonToggleAutoBackup.Location = new System.Drawing.Point(11, 143);
+            this.buttonToggleAutoBackup.Location = new System.Drawing.Point(11, 231);
             this.buttonToggleAutoBackup.Margin = new System.Windows.Forms.Padding(10);
             this.buttonToggleAutoBackup.Name = "buttonToggleAutoBackup";
             this.buttonToggleAutoBackup.Padding = new System.Windows.Forms.Padding(10);
@@ -354,7 +354,7 @@
             this.labelAutoStartUpdate.AutoSize = true;
             this.labelAutoStartUpdate.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelAutoStartUpdate.ForeColor = System.Drawing.Color.ForestGreen;
-            this.labelAutoStartUpdate.Location = new System.Drawing.Point(409, 67);
+            this.labelAutoStartUpdate.Location = new System.Drawing.Point(461, 139);
             this.labelAutoStartUpdate.Name = "labelAutoStartUpdate";
             this.labelAutoStartUpdate.Size = new System.Drawing.Size(126, 40);
             this.labelAutoStartUpdate.TabIndex = 21;
@@ -362,25 +362,24 @@
             // 
             // tableLayoutPanel1
             // 
-            this.tableLayoutPanel1.AutoSize = true;
             this.tableLayoutPanel1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.tableLayoutPanel1.CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.Single;
             this.tableLayoutPanel1.ColumnCount = 2;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 70F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 30F));
             this.tableLayoutPanel1.Controls.Add(this.labelServerProcess, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.label9, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.buttonToggleAutoBackup, 0, 2);
             this.tableLayoutPanel1.Controls.Add(this.labelAutoBackup, 1, 2);
             this.tableLayoutPanel1.Controls.Add(this.labelAutoStartUpdate, 1, 1);
             this.tableLayoutPanel1.Controls.Add(this.buttonToggleAutoStartUpdate, 0, 1);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(895, 15);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(870, 15);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 3;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(543, 224);
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(618, 321);
             this.tableLayoutPanel1.TabIndex = 22;
             // 
             // labelServerProcess
@@ -389,7 +388,7 @@
             this.labelServerProcess.AutoSize = true;
             this.labelServerProcess.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelServerProcess.ForeColor = System.Drawing.Color.ForestGreen;
-            this.labelServerProcess.Location = new System.Drawing.Point(405, 1);
+            this.labelServerProcess.Location = new System.Drawing.Point(457, 33);
             this.labelServerProcess.Name = "labelServerProcess";
             this.labelServerProcess.Size = new System.Drawing.Size(134, 40);
             this.labelServerProcess.TabIndex = 23;
@@ -400,7 +399,7 @@
             this.label9.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(4, 1);
+            this.label9.Location = new System.Drawing.Point(4, 33);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(218, 40);
             this.label9.TabIndex = 24;
@@ -412,7 +411,7 @@
             this.labelAutoBackup.AutoSize = true;
             this.labelAutoBackup.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelAutoBackup.ForeColor = System.Drawing.Color.ForestGreen;
-            this.labelAutoBackup.Location = new System.Drawing.Point(409, 158);
+            this.labelAutoBackup.Location = new System.Drawing.Point(461, 246);
             this.labelAutoBackup.Name = "labelAutoBackup";
             this.labelAutoBackup.Size = new System.Drawing.Size(126, 40);
             this.labelAutoBackup.TabIndex = 22;

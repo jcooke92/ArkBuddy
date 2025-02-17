@@ -8,16 +8,50 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Serilog;
+using System.Threading;
+using System.Reflection.Emit;
+using System.Diagnostics;
 
 namespace ArkBuddy
 {
     public partial class Form1: Form
     {
+        const string ARK_PROCESS_NAME = "ArkAscendedServer";
+        Color GOOD_COLOUR = Color.ForestGreen;
+        Color BAD_COLOUR = Color.Crimson;
+
         public Form1()
         {
             Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File("ark_buddy_log-.txt", rollingInterval: RollingInterval.Day).CreateLogger();
             Log.Information("Log initialized");
             InitializeComponent();
+            ThreadPool.QueueUserWorkItem(_ => monitorServerProcess());
+        }
+        public bool IsProcessRunning(string processName)
+        {
+            var processes = Process.GetProcessesByName(processName);
+            return processes.Length > 0;
+        }
+
+        public void monitorServerProcess()
+        {
+            while(true)
+            {
+                try
+                {
+                    Thread.Sleep(500);
+                    labelServerProcess.Invoke((Action)(() =>
+                    {
+                        var serverRunning = IsProcessRunning(ARK_PROCESS_NAME);
+                        labelServerProcess.Text = serverRunning ? "Running" : "Not running";
+                        labelServerProcess.ForeColor = serverRunning ? GOOD_COLOUR : BAD_COLOUR;
+                    }));
+                }
+                catch(Exception ex)
+                {
+                    Log.Error($"Exception during check server status: {ex.StackTrace}");
+                }
+            }
         }
 
         public string selectFolder(string description="Select folder")
