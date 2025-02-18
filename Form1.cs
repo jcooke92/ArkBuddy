@@ -20,6 +20,7 @@ namespace ArkBuddy
     public partial class Form1: Form
     {
         public const string ARK_PROCESS_NAME = "ArkAscendedServer";
+        public const string ARK_SERVER_EXE_PATH = "ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe";
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
@@ -28,12 +29,12 @@ namespace ArkBuddy
 
         public IniData serverConfigData = null;
         public const string INI_SERVER_SECTION = "ServerConfig";
-        public const string INI_SERVER_NAME = "ServerName";
+        public const string INI_SERVER_NAME = "SessionName";
         public const string INI_SERVER_PASSWORD = "ServerPassword";
-        public const string INI_SERVER_MAP = "ServerMap";
-        public const string INI_MODS_LIST = "ModsList";
+        public const string INI_SERVER_MAP = "Map";
+        public const string INI_MODS_LIST = "Mods";
         public const string INI_BATTLEYE = "Battleye";
-        public const string INI_SERVER_PORT = "ServerPort";
+        public const string INI_SERVER_PORT = "Port";
         public const string INI_QUERY_PORT = "QueryPort";
         public const string INI_RCON_PORT = "RCONPort";
         public const string INI_RCON_PASSWORD = "RCONPassword";
@@ -85,6 +86,7 @@ namespace ArkBuddy
 
         public bool loadSettings()
         {
+            Log.Information($"Loading settings from {SAVE_SETTINGS_INI}");
             var success = false;
             try
             {
@@ -127,6 +129,42 @@ namespace ArkBuddy
             if (!success)
             {
                 Log.Error($"Failed to load settings from {SAVE_SETTINGS_INI}");
+            }
+
+            return success;
+        }
+
+        public bool loadServerConfig()
+        {
+            var serverConfigPath = textBoxServerConfigINI.Text;
+            Log.Information($"Loading server config from {serverConfigPath}");
+            var success = false;
+            try
+            {
+                var parser = new FileIniDataParser();
+                serverConfigData = new IniData();
+                if (File.Exists(serverConfigPath))
+                {
+                    try
+                    {
+                        serverConfigData = parser.ReadFile(serverConfigPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Exception during server config INI read - INI file may be corrupted: {ex.StackTrace}");
+                    }
+                }
+
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Exception server config INI load: {ex.StackTrace}");
+            }
+
+            if (!success)
+            {
+                Log.Error($"Failed to load server config from {serverConfigPath}");
             }
 
             return success;
@@ -199,9 +237,80 @@ namespace ArkBuddy
             return success;
         }
 
-        public void startServer()
+        public bool startServer()
         {
+            /*
+             * start C:\Users\vr\Desktop\arkie2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe Svartalfheim_WP?listen?SessionName=gnomez?ServerPassword=statwhore?Port=7777?QueryPort=27015? 
+             * -NoBattlEye -mods=962796,940003,928597,929800,933099,928548,931047,929868,937546,928621,928506,932225,935408,929420,933301,929347
+             */
+            Log.Information("Starting server...");
+            var delimiter = "?";
+            var serverFolder = textBoxServerFolder.Text;
+            disableAllComponents();
+            var success = false;
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    Log.Information("Constructing START SERVER command");
+                    var battleye = bool.Parse(serverConfigData[INI_SERVER_SECTION][INI_BATTLEYE]);
+                    var modsList = serverConfigData[INI_SERVER_SECTION][INI_MODS_LIST];
+                    var settings = new List<string>()
+                    {
+                        serverConfigData[INI_SERVER_SECTION][INI_SERVER_MAP],
+                        "listen",
+                        $"{INI_SERVER_NAME}={serverConfigData[INI_SERVER_SECTION][INI_SERVER_NAME]}",
+                        $"{INI_SERVER_PASSWORD}={serverConfigData[INI_SERVER_SECTION][INI_SERVER_PASSWORD]}",
+                        $"{INI_SERVER_PORT}={serverConfigData[INI_SERVER_SECTION][INI_SERVER_PORT]}",
+                        $"{INI_QUERY_PORT}={serverConfigData[INI_SERVER_SECTION][INI_QUERY_PORT]}",
+                    };
+                    var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
+                    var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
+                    using(var process = new Process())
+                    {
+                        process.StartInfo.FileName = $"{serverFolder}\\{ARK_SERVER_EXE_PATH}";
+                        process.StartInfo.Arguments = $"";
+                        foreach (var s in settings)
+                        {
+                            process.StartInfo.Arguments += $"{s}{delimiter}";
+                        }
+                        process.StartInfo.Arguments = battleye ? $" {process.StartInfo.Arguments} -NoBattleye" : process.StartInfo.Arguments;
+                        if (!string.IsNullOrWhiteSpace(modsList)) { process.StartInfo.Arguments += $" -mods={modsList}"; }
+                        process.StartInfo.UseShellExecute = true;
+                        process.StartInfo.CreateNoWindow = false;
+                        process.Start();
+                    }
 
+                    Stopwatch processTimer = Stopwatch.StartNew();
+                    while (!IsProcessRunning(ARK_PROCESS_NAME) && processTimer.Elapsed.TotalSeconds < 15)
+                    {
+                        Thread.Sleep(500);
+                    }
+
+                    if (IsProcessRunning(ARK_PROCESS_NAME))
+                    {
+                        Log.Information($"{ARK_PROCESS_NAME} is running :)");
+                        success = true;
+                    }
+                    else
+                    {
+                        Log.Error($"{ARK_PROCESS_NAME} is NOT running :(");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception start server: {ex.StackTrace}");
+                }
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
+            {
+                Application.DoEvents();
+            }
+            enableAllComponents();
+
+            return success;
         }
 
         public void setComponentsEnabled(Control parent, bool enabled=true)
@@ -492,6 +601,7 @@ namespace ArkBuddy
             Thread serverStatusThread = new Thread(() => { monitorServerProcess(); }) { IsBackground = true };
             serverStatusThread.Start();
             loadSettings();
+            loadServerConfig();
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -503,6 +613,15 @@ namespace ArkBuddy
         private void buttonExit_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void buttonStartServer_Click(object sender, EventArgs e)
+        {
+            var success = startServer();
+            if(!success)
+            {
+                MessageBox.Show("Error starting server", "Start server error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

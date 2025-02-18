@@ -214,6 +214,7 @@
             this.buttonStartServer.TabIndex = 6;
             this.buttonStartServer.Text = "Start Server";
             this.buttonStartServer.UseVisualStyleBackColor = true;
+            this.buttonStartServer.Click += new System.EventHandler(this.buttonStartServer_Click);
             // 
             // flowLayoutPanel1
             // 
