@@ -149,6 +149,7 @@
             this.buttonUpdateServer.TabIndex = 7;
             this.buttonUpdateServer.Text = "Install/Update Server";
             this.buttonUpdateServer.UseVisualStyleBackColor = true;
+            this.buttonUpdateServer.Click += new System.EventHandler(this.buttonUpdateServer_Click);
             // 
             // buttonSaveExit
             // 

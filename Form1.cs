@@ -21,6 +21,8 @@ namespace ArkBuddy
     {
         public const string ARK_PROCESS_NAME = "ArkAscendedServer";
         public const string ARK_SERVER_EXE_PATH = "ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe";
+        public const string STEAM_CMD_EXE = "steamcmd.exe";
+        public const string STEAMD_CMD_PROCESS_NAME = "steamcmd";
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
@@ -305,6 +307,62 @@ namespace ArkBuddy
 
             Stopwatch timer = Stopwatch.StartNew();
             while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
+            {
+                Application.DoEvents();
+            }
+            enableAllComponents();
+
+            return success;
+        }
+
+        public bool updateServer()
+        {
+            Log.Information("Updating server...");
+            disableAllComponents();
+            var serverFolder = textBoxServerFolder.Text;
+            var steamCmdFolder = textBoxSteamCmdFolder.Text;
+            var success = false;
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    Log.Information("Constructing UPDATE SERVER command");
+                    var process = new Process();
+                    process.StartInfo.FileName = $"{steamCmdFolder}\\{STEAM_CMD_EXE}";
+                    process.StartInfo.Arguments = $"+force_install_dir \"{serverFolder}\" +login anonymous +app_update 2430930 +quit";
+                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.CreateNoWindow = false;
+                    process.Start();
+
+                    Stopwatch internaltimer = Stopwatch.StartNew();
+                    while (IsProcessRunning(STEAMD_CMD_PROCESS_NAME) && internaltimer.Elapsed.TotalSeconds < 300)
+                    {
+                        Thread.Sleep(1_000);
+                    }
+
+                    bool finishedInTime = process.WaitForExit(1_000);
+
+                    if (finishedInTime && process.ExitCode == 0)
+                    {
+                        Log.Information($"Server update successful");
+                        success = true;
+                    }
+                    else
+                    {
+                        Log.Error($"Server update timed out");
+                        if (!process.HasExited)
+                            process.Kill();
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception start server: {ex.StackTrace}");
+                }
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 310)
             {
                 Application.DoEvents();
             }
@@ -621,6 +679,15 @@ namespace ArkBuddy
             if(!success)
             {
                 MessageBox.Show("Error starting server", "Start server error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void buttonUpdateServer_Click(object sender, EventArgs e)
+        {
+            var success = updateServer();
+            if(!success)
+            {
+                MessageBox.Show("Error updating server", "Update server error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
