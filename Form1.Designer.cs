@@ -245,6 +245,7 @@
             this.buttonOpenRcon.TabIndex = 10;
             this.buttonOpenRcon.Text = "RCON Open+Connect";
             this.buttonOpenRcon.UseVisualStyleBackColor = true;
+            this.buttonOpenRcon.Click += new System.EventHandler(this.buttonOpenRcon_Click);
             // 
             // buttonOpenGameUserSettingsINI
             // 

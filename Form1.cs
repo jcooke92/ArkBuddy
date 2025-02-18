@@ -23,6 +23,7 @@ namespace ArkBuddy
         public const string ARK_SERVER_EXE_PATH = "ShooterGame\\Binaries\\Win64\\ArkAscendedServer.exe";
         public const string STEAM_CMD_EXE = "steamcmd.exe";
         public const string STEAMD_CMD_PROCESS_NAME = "steamcmd";
+        public const string RCON_PROCESS_NAME = "mcrcon";
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
@@ -276,7 +277,7 @@ namespace ArkBuddy
                         {
                             process.StartInfo.Arguments += $"{s}{delimiter}";
                         }
-                        process.StartInfo.Arguments = battleye ? $" {process.StartInfo.Arguments} -NoBattleye" : process.StartInfo.Arguments;
+                        process.StartInfo.Arguments = battleye ? process.StartInfo.Arguments : $" {process.StartInfo.Arguments} -NoBattleye";
                         if (!string.IsNullOrWhiteSpace(modsList)) { process.StartInfo.Arguments += $" -mods={modsList}"; }
                         process.StartInfo.UseShellExecute = true;
                         process.StartInfo.CreateNoWindow = false;
@@ -396,6 +397,55 @@ namespace ArkBuddy
             labelRunningCommand.Visible = false;
         }
 
+        public bool openRconConnect()
+        {
+            Log.Information("Saving+exiting server...");
+            disableAllComponents();
+            string rconExePath = textBoxRconFolder.Text;
+            var success = false;
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    Log.Information("Constructing RCON command for server SAVE");
+                    var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
+                    var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
+                    var process = new Process();
+                    process.StartInfo.FileName = $"{rconExePath}\\mcrcon.exe";
+                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password}";
+                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.CreateNoWindow = false;
+                    process.Start();
+
+                    // Wait for RCON to open+connect - it will exit if connection fails
+                    Thread.Sleep(10_000);
+
+                    if (IsProcessRunning(RCON_PROCESS_NAME))
+                    {
+                        Log.Information($"{RCON_PROCESS_NAME} is running :)");
+                        success = true;
+                    }
+                    else
+                    {
+                        Log.Error($"{RCON_PROCESS_NAME} is NOT running :(");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception during RCON open+connect: {ex.StackTrace}");
+                }
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 40)
+            {
+                Application.DoEvents();
+            }
+            enableAllComponents();
+
+            return success;
+        }
+
         public bool saveExit()
         {
             Log.Information("Saving+exiting server...");
@@ -481,7 +531,7 @@ namespace ArkBuddy
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"Exception save+exit server: {ex.StackTrace}");
+                    Log.Error($"Exception during save+exit server: {ex.StackTrace}");
                 }
             });
 
@@ -688,6 +738,15 @@ namespace ArkBuddy
             if(!success)
             {
                 MessageBox.Show("Error updating server", "Update server error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void buttonOpenRcon_Click(object sender, EventArgs e)
+        {
+            var success = openRconConnect();
+            if (!success)
+            {
+                MessageBox.Show("Error connecting+opening RCON", "RCON open+connect error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
