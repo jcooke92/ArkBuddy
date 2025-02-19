@@ -659,8 +659,9 @@ namespace ArkBuddy
             }
         }
 
-        public static void CreateZipArchive(string sourceDir, string destDirectory)
+        public static bool CreateZipArchive(string sourceDir, string destDirectory)
         {
+            var success = false;
             string zipFileName = $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}.zip";
             string zipFilePath = Path.Combine(destDirectory, zipFileName);
             using (var zip = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
@@ -676,14 +677,26 @@ namespace ArkBuddy
                     }
                     catch (IOException)
                     {
-                        Log.Error($"Skipping file in use: {file}");
+                        Log.Debug($"Skipping file in use: {file}");
                     }
                 }
             }
+
+            if (File.Exists(zipFileName))
+            {
+                success = true;
+            }
+            else
+            {
+                Log.Error($"Could not create server backup");
+            }
+
+            return success;
         }
 
-        public static void CleanupOldArchives(string destDir, int maxArchives)
+        public static bool CleanupOldArchives(string destDir, int maxArchives)
         {
+            var success = false;
             var zipFiles = Directory.GetFiles(destDir, "*.zip")
                                     .Select(f => new FileInfo(f))
                                     .OrderByDescending(f => f.CreationTime)
@@ -704,6 +717,7 @@ namespace ArkBuddy
                     }
                 }
             }
+            return success;
         }
 
         public bool backupServer()
@@ -717,9 +731,8 @@ namespace ArkBuddy
             {
                 try
                 {
-                    CreateZipArchive(sourceDir, destDir);
-                    CleanupOldArchives(destDir, MAX_BACKUPS_TO_KEEP);
-                    success = true;
+                    success = CreateZipArchive(sourceDir, destDir);
+                    success &= CleanupOldArchives(destDir, MAX_BACKUPS_TO_KEEP);
                 }
                 catch (Exception ex)
                 {
