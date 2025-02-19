@@ -26,6 +26,7 @@ namespace ArkBuddy
         public const string STEAM_CMD_EXE = "steamcmd.exe";
         public const string STEAMD_CMD_PROCESS_NAME = "steamcmd";
         public const string RCON_PROCESS_NAME = "mcrcon";
+        public const string ARK_CONFIG_PATH = "ShooterGame\\Saved\\Config\\WindowsServer";
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
@@ -407,6 +408,51 @@ namespace ArkBuddy
             labelRunningCommand.Visible = false;
         }
 
+        public bool openFile(string filePath)
+        {
+            Log.Information($"Opening {filePath}...");
+            disableAllComponents();
+            var success = false;
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    Log.Information($"Constructing command for opening {filePath}");
+                    var process = new Process();
+                    process.StartInfo.FileName = filePath;
+                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.CreateNoWindow = false;
+                    process.Start();
+                    success = true;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception opening {filePath}: {ex.StackTrace}");
+                }
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 15)
+            {
+                Application.DoEvents();
+            }
+            enableAllComponents();
+
+            return success;
+        }
+
+        public bool openGameUserSettingsINI()
+        {
+            string gameUserSettingsPath = $"{textBoxServerFolder.Text}\\{ARK_CONFIG_PATH}\\GameUserSettings.ini";
+            return openFile(gameUserSettingsPath);
+        }
+
+        public bool openGameINI()
+        {
+            string gameUserSettingsPath = $"{textBoxServerFolder.Text}\\{ARK_CONFIG_PATH}\\Game.ini";
+            return openFile(gameUserSettingsPath);
+        }
+
         public bool openRconConnect()
         {
             Log.Information("Saving+exiting server...");
@@ -758,6 +804,24 @@ namespace ArkBuddy
             if (!success)
             {
                 MessageBox.Show("Error connecting+opening RCON", "RCON open+connect error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void buttonOpenGameUserSettingsINI_Click(object sender, EventArgs e)
+        {
+            var success = openGameUserSettingsINI();
+            if (!success)
+            {
+                MessageBox.Show("Error opening GameUserSettingsINI", "GameUserSettingsINI open error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void buttonOpenGameINI_Click(object sender, EventArgs e)
+        {
+            var success = openGameINI();
+            if (!success)
+            {
+                MessageBox.Show("Error opening GameINI", "GameINI open error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

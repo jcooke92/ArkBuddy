@@ -260,6 +260,7 @@
             this.buttonOpenGameUserSettingsINI.TabIndex = 12;
             this.buttonOpenGameUserSettingsINI.Text = "Open GameUserSettings.ini";
             this.buttonOpenGameUserSettingsINI.UseVisualStyleBackColor = true;
+            this.buttonOpenGameUserSettingsINI.Click += new System.EventHandler(this.buttonOpenGameUserSettingsINI_Click);
             // 
             // buttonOpenGameINI
             // 
@@ -274,6 +275,7 @@
             this.buttonOpenGameINI.TabIndex = 13;
             this.buttonOpenGameINI.Text = "Open Game.ini";
             this.buttonOpenGameINI.UseVisualStyleBackColor = true;
+            this.buttonOpenGameINI.Click += new System.EventHandler(this.buttonOpenGameINI_Click);
             // 
             // richTextBoxOutputLog
             // 
