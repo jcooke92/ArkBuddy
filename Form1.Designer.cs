@@ -179,6 +179,7 @@
             this.buttonBackupServer.TabIndex = 9;
             this.buttonBackupServer.Text = "Back-up Server";
             this.buttonBackupServer.UseVisualStyleBackColor = true;
+            this.buttonBackupServer.Click += new System.EventHandler(this.buttonBackupServer_Click);
             // 
             // textBoxBackupFolder
             // 

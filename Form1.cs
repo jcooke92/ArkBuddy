@@ -16,6 +16,7 @@ using IniParser;
 using System.IO;
 using Serilog.Events;
 using Serilog.Core;
+using System.IO.Compression;
 
 namespace ArkBuddy
 {
@@ -27,6 +28,8 @@ namespace ArkBuddy
         public const string STEAMD_CMD_PROCESS_NAME = "steamcmd";
         public const string RCON_PROCESS_NAME = "mcrcon";
         public const string ARK_CONFIG_PATH = "ShooterGame\\Saved\\Config\\WindowsServer";
+        public const string ARK_SAVE_PATH = "ShooterGame\\Saved";
+        public const int MAX_BACKUPS_TO_KEEP = 50;
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
@@ -282,7 +285,7 @@ namespace ArkBuddy
                     var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
                     using(var process = new Process())
                     {
-                        process.StartInfo.FileName = $"{serverFolder}\\{ARK_SERVER_EXE_PATH}";
+                        process.StartInfo.FileName = Path.Combine(serverFolder, ARK_SERVER_EXE_PATH);
                         process.StartInfo.Arguments = $"";
                         foreach (var s in settings)
                         {
@@ -340,7 +343,7 @@ namespace ArkBuddy
                 {
                     Log.Information("Constructing UPDATE SERVER command");
                     var process = new Process();
-                    process.StartInfo.FileName = $"{steamCmdFolder}\\{STEAM_CMD_EXE}";
+                    process.StartInfo.FileName = Path.Combine(steamCmdFolder, STEAM_CMD_EXE);
                     process.StartInfo.Arguments = $"+force_install_dir \"{serverFolder}\" +login anonymous +app_update 2430930 +quit";
                     process.StartInfo.UseShellExecute = true;
                     process.StartInfo.CreateNoWindow = false;
@@ -443,13 +446,13 @@ namespace ArkBuddy
 
         public bool openGameUserSettingsINI()
         {
-            string gameUserSettingsPath = $"{textBoxServerFolder.Text}\\{ARK_CONFIG_PATH}\\GameUserSettings.ini";
+            string gameUserSettingsPath = Path.Combine(textBoxServerFolder.Text, ARK_CONFIG_PATH, "GameUserSettings.ini");
             return openFile(gameUserSettingsPath);
         }
 
         public bool openGameINI()
         {
-            string gameUserSettingsPath = $"{textBoxServerFolder.Text}\\{ARK_CONFIG_PATH}\\Game.ini";
+            string gameUserSettingsPath = Path.Combine(textBoxServerFolder.Text, ARK_CONFIG_PATH, "Game.ini");
             return openFile(gameUserSettingsPath);
         }
 
@@ -467,7 +470,7 @@ namespace ArkBuddy
                     var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
                     var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
                     var process = new Process();
-                    process.StartInfo.FileName = $"{rconExePath}\\mcrcon.exe";
+                    process.StartInfo.FileName = Path.Combine(rconExePath, "mcrcon.exe");
                     process.StartInfo.Arguments = $"-H localhost -P {port} -p {password}";
                     process.StartInfo.UseShellExecute = true;
                     process.StartInfo.CreateNoWindow = false;
@@ -516,7 +519,7 @@ namespace ArkBuddy
                     var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
                     var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
                     var process = new Process();
-                    process.StartInfo.FileName = $"{rconExePath}\\mcrcon.exe";
+                    process.StartInfo.FileName = Path.Combine(rconExePath, "mcrcon.exe");
                     process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} SaveWorld";
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
@@ -545,7 +548,7 @@ namespace ArkBuddy
                     port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
                     password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
                     process = new Process();
-                    process.StartInfo.FileName = $"{rconExePath}\\mcrcon.exe";
+                    process.StartInfo.FileName = Path.Combine(rconExePath, "mcrcon.exe");
                     process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} DoExit";
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
@@ -654,6 +657,84 @@ namespace ArkBuddy
             {
                 enableAllComponents();
             }
+        }
+
+        public static void CreateZipArchive(string sourceDir, string destDirectory)
+        {
+            string zipFileName = $"Backup_{DateTime.Now:yyyyMMdd_HHmmss}.zip";
+            string zipFilePath = Path.Combine(destDirectory, zipFileName);
+            using (var zip = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
+            {
+                foreach (string file in Directory.GetFiles(sourceDir))
+                {
+                    try
+                    {
+                        using (FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.None))
+                        {
+                            zip.CreateEntryFromFile(file, Path.GetFileName(file), CompressionLevel.Optimal);
+                        }
+                    }
+                    catch (IOException)
+                    {
+                        Log.Error($"Skipping file in use: {file}");
+                    }
+                }
+            }
+        }
+
+        public static void CleanupOldArchives(string destDir, int maxArchives)
+        {
+            var zipFiles = Directory.GetFiles(destDir, "*.zip")
+                                    .Select(f => new FileInfo(f))
+                                    .OrderByDescending(f => f.CreationTime)
+                                    .ToList();
+
+            if (zipFiles.Count > maxArchives)
+            {
+                foreach (var file in zipFiles.Skip(maxArchives))
+                {
+                    try
+                    {
+                        File.Delete(file.FullName);
+                        Log.Debug($"Deleted old archive: {file.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                       Log.Error($"Failed to delete {file.Name}: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        public bool backupServer()
+        {
+            Log.Information("Backing up server...");
+            disableAllComponents();
+            var success = false;
+            var sourceDir = Path.Combine(textBoxServerFolder.Text, ARK_SAVE_PATH);
+            var destDir = textBoxBackupFolder.Text;
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    CreateZipArchive(sourceDir, destDir);
+                    CleanupOldArchives(destDir, MAX_BACKUPS_TO_KEEP);
+                    success = true;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception during backup server: {ex.StackTrace}");
+                }
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
+            {
+                Application.DoEvents();
+            }
+            enableAllComponents();
+
+            return success;
         }
 
         public void toggleAutoBackup()
@@ -822,6 +903,15 @@ namespace ArkBuddy
             if (!success)
             {
                 MessageBox.Show("Error opening GameINI", "GameINI open error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void buttonBackupServer_Click(object sender, EventArgs e)
+        {
+            var success = backupServer();
+            if (!success)
+            {
+                MessageBox.Show("Error backing up server", "Server backup error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
