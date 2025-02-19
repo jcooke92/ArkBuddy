@@ -14,6 +14,8 @@ using System.Diagnostics;
 using IniParser.Model;
 using IniParser;
 using System.IO;
+using Serilog.Events;
+using Serilog.Core;
 
 namespace ArkBuddy
 {
@@ -47,14 +49,22 @@ namespace ArkBuddy
 
         public Form1()
         {
-            string logName = $"logs/ark_buddy_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
-            Log.Logger = new LoggerConfiguration().WriteTo.Console().WriteTo.File(logName).CreateLogger();
-            Log.Information("Log initialized");
             InitializeComponent();
         }
+
+        public void initializeLog()
+        {
+            string logName = $"logs/ark_buddy_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+            Log.Logger = new LoggerConfiguration().WriteTo.Console()
+            .WriteTo.File(logName)
+            .WriteTo.Sink(new RichTextBoxSink(richTextBoxOutputLog))
+            .CreateLogger();
+            Log.Information("Log initialized");
+        }
+
         public bool IsProcessRunning(string processName)
         {
-            Log.Information($"Checking if {processName} is running");
+            Log.Debug($"Checking if {processName} is running");
             var processes = Process.GetProcessesByName(processName);
             return processes.Length > 0;
         }
@@ -437,7 +447,7 @@ namespace ArkBuddy
             });
 
             Stopwatch timer = Stopwatch.StartNew();
-            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 40)
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 15)
             {
                 Application.DoEvents();
             }
@@ -705,6 +715,7 @@ namespace ArkBuddy
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            initializeLog();
             labelRunningCommand.Visible = false;
             Thread serverStatusThread = new Thread(() => { monitorServerProcess(); }) { IsBackground = true };
             serverStatusThread.Start();
@@ -747,6 +758,28 @@ namespace ArkBuddy
             if (!success)
             {
                 MessageBox.Show("Error connecting+opening RCON", "RCON open+connect error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+
+    public class RichTextBoxSink : ILogEventSink
+    {
+        public RichTextBox richTextBox;
+        public RichTextBoxSink(RichTextBox richTextBox)
+        {
+            this.richTextBox = richTextBox;
+        }
+        public void Emit(LogEvent logEvent)
+        {
+            richTextBox.Invoke(new Action(() => WriteToRichTextBox(logEvent)));
+        }
+
+        public void WriteToRichTextBox(LogEvent logEvent)
+        {
+            if (logEvent.Level > LogEventLevel.Debug)
+            {
+                richTextBox.AppendText($"{logEvent.Timestamp:HH:mm:ss} [{logEvent.Level}] {logEvent.RenderMessage()}{Environment.NewLine}");
+                richTextBox.ScrollToCaret();
             }
         }
     }
