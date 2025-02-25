@@ -31,6 +31,7 @@ namespace ArkBuddy
         public const string ARK_SAVE_PATH = "ShooterGame\\Saved";
         public const int MAX_BACKUPS_TO_KEEP = 50;
         public const int AUTO_START_UPDATE_INTERVAL_S = 15 * 60;
+        public const int AUTO_BACKUP_INTERVAL_S = 10 * 60;
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
@@ -637,6 +638,15 @@ namespace ArkBuddy
             }
         }
 
+        public void autoBackup()
+        {
+            while (autoBackupEnabled)
+            {
+                Thread.Sleep(AUTO_BACKUP_INTERVAL_S * 1000);
+                backupServer();
+            }
+        }
+
         public bool toggleAutoStartUpdate()
         {
             Log.Information("Toggling AutoStart/Update...");
@@ -803,9 +813,79 @@ namespace ArkBuddy
             return success;
         }
 
-        public void toggleAutoBackup()
+        public bool toggleAutoBackup()
         {
+            Log.Information("Toggling auto backup...");
+            disableAllComponents();
+            var success = false;
+            var enable = labelAutoBackup.Text.Contains("Disabled");
 
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    if (enable)
+                    {
+                        labelAutoBackup.Invoke((Action)(() =>
+                        {
+                            labelAutoBackup.Text = "Enabled";
+                            labelAutoBackup.ForeColor = GOOD_COLOUR;
+                        }));
+                        autoBackupEnabled = true;
+                        autoBackupThread = new Thread(() => { autoBackup(); }) { IsBackground = true };
+                        autoBackupThread.Start();
+                        Thread.Sleep(3_000);
+                        if (autoBackupThread.IsAlive)
+                        {
+                            Log.Information("Successfully started auto backup thread");
+                            success = true;
+                        }
+                        else
+                        {
+                            Log.Error("Could not start auto backup thread");
+                        }
+                    }
+                    else
+                    {
+                        labelAutoBackup.Invoke((Action)(() =>
+                        {
+                            labelAutoBackup.Text = "Disabled";
+                            labelAutoBackup.ForeColor = BAD_COLOUR;
+                        }));
+                        autoBackupEnabled = false;
+                        if (autoBackupThread != null && autoBackupThread.IsAlive)
+                        {
+                            if (autoBackupThread.Join(5000))
+                            {
+                                Log.Information("Successfully stopped auto start/update thread");
+                                success = true;
+                            }
+                            else
+                            {
+                                Log.Error("Exceeded timeout while waiting for AutoStartUpdate thread to complete");
+                            }
+                        }
+                        else
+                        {
+                            Log.Information("Successfully stopped auto backup thread");
+                            success = true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception during toggle auto backup: {ex.StackTrace}");
+                }
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
+            {
+                Application.DoEvents();
+            }
+            enableAllComponents();
+
+            return success;
         }
 
         public string selectFolder(string description="Select folder")
@@ -898,7 +978,11 @@ namespace ArkBuddy
 
         private void buttonToggleAutoBackup_Click(object sender, EventArgs e)
         {
-
+            var success = toggleAutoBackup();
+            if (!success)
+            {
+                MessageBox.Show("Error toggling auto backup", "Toggle auto backup error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void buttonSaveExit_Click(object sender, EventArgs e)
