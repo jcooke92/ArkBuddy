@@ -633,8 +633,12 @@ namespace ArkBuddy
         {
             while(autoStartUpdateEnabled)
             {
-                Thread.Sleep(AUTO_START_UPDATE_INTERVAL_S * 1000);
                 updateServer();
+                Stopwatch timer = Stopwatch.StartNew();
+                while(timer.Elapsed.TotalSeconds < AUTO_START_UPDATE_INTERVAL_S && autoStartUpdateEnabled)
+                {
+                    Thread.Sleep(1000);
+                }
             }
         }
 
@@ -642,8 +646,12 @@ namespace ArkBuddy
         {
             while (autoBackupEnabled)
             {
-                Thread.Sleep(AUTO_BACKUP_INTERVAL_S * 1000);
                 backupServer();
+                Stopwatch timer = Stopwatch.StartNew();
+                while (timer.Elapsed.TotalSeconds < AUTO_BACKUP_INTERVAL_S && autoBackupEnabled)
+                {
+                    Thread.Sleep(1000);
+                }
             }
         }
 
@@ -745,9 +753,10 @@ namespace ArkBuddy
                 }
             }
 
-            if (File.Exists(zipFileName))
+            if (File.Exists(zipFilePath))
             {
                 success = true;
+                Log.Information($"Succesfully created backup: {zipFilePath}");
             }
             else
             {
