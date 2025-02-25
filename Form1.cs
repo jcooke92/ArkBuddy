@@ -30,11 +30,13 @@ namespace ArkBuddy
         public const string ARK_CONFIG_PATH = "ShooterGame\\Saved\\Config\\WindowsServer";
         public const string ARK_SAVE_PATH = "ShooterGame\\Saved";
         public const int MAX_BACKUPS_TO_KEEP = 50;
+        public const int AUTO_START_UPDATE_INTERVAL_S = 15 * 60;
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
         public Color BAD_COLOUR = Color.Crimson;
         public Thread autoStartUpdateThread = null;
+        public Thread autoBackupThread = null;
 
         public IniData serverConfigData = null;
         public const string INI_SERVER_SECTION = "ServerConfig";
@@ -391,7 +393,14 @@ namespace ArkBuddy
             foreach (Control control in parent.Controls)
             {
                 if(ReferenceEquals(control, labelRunningCommand)) { continue; }
-                control.Enabled = enabled;
+                if(control.InvokeRequired)
+                {
+                    control.Invoke((Action)(() => { control.Enabled = enabled; }));
+                }
+                else
+                {
+                    control.Enabled = enabled;
+                }
                 if (control.HasChildren)
                 {
                     setComponentsEnabled(control, enabled); // Recursively handle nested controls
@@ -402,13 +411,28 @@ namespace ArkBuddy
         public void disableAllComponents()
         {
             setComponentsEnabled(this, false);
-            labelRunningCommand.Visible = true;
+            if(labelRunningCommand.InvokeRequired)
+            {
+                labelRunningCommand.Invoke((Action)(() => { labelRunningCommand.Visible = true; }));
+            }
+            else
+            {
+                labelRunningCommand.Visible = true;
+            }
         }
 
         public void enableAllComponents()
         {
             setComponentsEnabled(this, true);
-            labelRunningCommand.Visible = false;
+            if (labelRunningCommand.InvokeRequired)
+            {
+                labelRunningCommand.Invoke((Action)(() => { labelRunningCommand.Visible = false; }));
+            }
+            else
+            {
+                labelRunningCommand.Visible = false;
+            }
+            ;
         }
 
         public bool openFile(string filePath)
@@ -608,55 +632,84 @@ namespace ArkBuddy
         {
             while(autoStartUpdateEnabled)
             {
-
+                Thread.Sleep(AUTO_START_UPDATE_INTERVAL_S * 1000);
+                updateServer();
             }
         }
 
-        public void startAutoStartUpdate()
+        public bool toggleAutoStartUpdate()
         {
-            autoStartUpdateThread = new Thread(() => { autoStartUpdate(); }) { IsBackground = true };
-            autoStartUpdateThread.Start();
-        }
+            Log.Information("Toggling AutoStart/Update...");
+            disableAllComponents();
+            var success = false;
+            var enable = labelAutoStartUpdate.Text.Contains("Disabled");
 
-        public void stopAutoStartUpdate()
-        {
-            autoStartUpdateEnabled = false;
-            if(autoStartUpdateThread != null && autoStartUpdateThread.IsAlive)
+            var task = Task.Run(() =>
             {
-                if(!autoStartUpdateThread.Join(5000))
+                try
                 {
-                    Log.Error("Exceeded timeout while waiting for AutoStartUpdate thread to complete");
+                    if (enable)
+                    {
+                        labelAutoStartUpdate.Invoke((Action)(() =>
+                        {
+                            labelAutoStartUpdate.Text = "Enabled";
+                            labelAutoStartUpdate.ForeColor = GOOD_COLOUR;
+                        }));
+                        autoStartUpdateEnabled = true;
+                        autoStartUpdateThread = new Thread(() => { autoStartUpdate(); }) { IsBackground = true };
+                        autoStartUpdateThread.Start();
+                        Thread.Sleep(3_000);
+                        if (autoStartUpdateThread.IsAlive)
+                        {
+                            Log.Information("Successfully started auto start/update thread");
+                            success = true;
+                        }
+                        else
+                        {
+                            Log.Error("Could not start auto start/update thread");
+                        }
+                    }
+                    else
+                    {
+                        labelAutoStartUpdate.Invoke((Action)(() =>
+                        {
+                            labelAutoStartUpdate.Text = "Disabled";
+                            labelAutoStartUpdate.ForeColor = BAD_COLOUR;
+                        }));
+                        autoStartUpdateEnabled = false;
+                        if (autoStartUpdateThread != null && autoStartUpdateThread.IsAlive)
+                        {
+                            if (autoStartUpdateThread.Join(5000))
+                            {
+                                Log.Information("Successfully stopped auto start/update thread");
+                                success = true;
+                            }
+                            else
+                            {
+                                Log.Error("Exceeded timeout while waiting for AutoStartUpdate thread to complete");
+                            }
+                        }
+                        else
+                        {
+                            Log.Information("Successfully stopped auto start/update thread");
+                            success = true;
+                        }
+                    }
                 }
-            }
-        }
-
-        public void toggleAutoStartUpdate()
-        {
-            try
-            {
-                disableAllComponents();
-                var enable = labelAutoStartUpdate.Text.Contains("Disabled");
-                if (enable) 
+                catch (Exception ex)
                 {
-                    labelAutoStartUpdate.Text = "Enabled";
-                    labelAutoStartUpdate.ForeColor = GOOD_COLOUR;
-                    autoStartUpdate(); 
-                } 
-                else 
-                {
-                    labelAutoStartUpdate.Text = "Disabled";
-                    labelAutoStartUpdate.ForeColor = BAD_COLOUR;
-                    stopAutoStartUpdate();
+                    Log.Error($"Exception during toggle auto start+update: {ex.StackTrace}");
                 }
-            }
-            catch(Exception ex)
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
             {
-                Log.Error($"Exception during toggle auto start+update: {ex.StackTrace}");
+                Application.DoEvents();
             }
-            finally
-            {
-                enableAllComponents();
-            }
+            enableAllComponents();
+
+            return success;
         }
 
         public static bool CreateZipArchive(string sourceDir, string destDirectory)
@@ -836,7 +889,11 @@ namespace ArkBuddy
 
         private void buttonToggleAutoStartUpdate_Click(object sender, EventArgs e)
         {
-
+            var success = toggleAutoStartUpdate();
+            if(!success)
+            {
+                MessageBox.Show("Error toggling auto start/update", "Toggle auto start/update error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void buttonToggleAutoBackup_Click(object sender, EventArgs e)

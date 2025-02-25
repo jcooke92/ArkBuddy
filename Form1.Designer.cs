@@ -367,12 +367,12 @@
             this.labelAutoStartUpdate.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.labelAutoStartUpdate.AutoSize = true;
             this.labelAutoStartUpdate.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelAutoStartUpdate.ForeColor = System.Drawing.Color.ForestGreen;
+            this.labelAutoStartUpdate.ForeColor = System.Drawing.Color.Crimson;
             this.labelAutoStartUpdate.Location = new System.Drawing.Point(461, 139);
             this.labelAutoStartUpdate.Name = "labelAutoStartUpdate";
             this.labelAutoStartUpdate.Size = new System.Drawing.Size(126, 40);
             this.labelAutoStartUpdate.TabIndex = 21;
-            this.labelAutoStartUpdate.Text = "Enabled";
+            this.labelAutoStartUpdate.Text = "Disabled";
             // 
             // tableLayoutPanel1
             // 
@@ -424,12 +424,12 @@
             this.labelAutoBackup.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.labelAutoBackup.AutoSize = true;
             this.labelAutoBackup.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.labelAutoBackup.ForeColor = System.Drawing.Color.ForestGreen;
+            this.labelAutoBackup.ForeColor = System.Drawing.Color.Crimson;
             this.labelAutoBackup.Location = new System.Drawing.Point(461, 246);
             this.labelAutoBackup.Name = "labelAutoBackup";
             this.labelAutoBackup.Size = new System.Drawing.Size(126, 40);
             this.labelAutoBackup.TabIndex = 22;
-            this.labelAutoBackup.Text = "Enabled";
+            this.labelAutoBackup.Text = "Disabled";
             // 
             // tableLayoutPanelFilePaths
             // 
