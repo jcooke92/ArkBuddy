@@ -633,7 +633,14 @@ namespace ArkBuddy
         {
             while(autoStartUpdateEnabled)
             {
-                updateServer();
+                if(updateServer())
+                {
+                    startServer();
+                }
+                else
+                {
+                    Log.Error($"Couldn't update server - skipping server start");
+                }
                 Stopwatch timer = Stopwatch.StartNew();
                 while(timer.Elapsed.TotalSeconds < AUTO_START_UPDATE_INTERVAL_S && autoStartUpdateEnabled)
                 {
