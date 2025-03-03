@@ -808,6 +808,13 @@ namespace ArkBuddy
                     }
                 }
             }
+
+            zipFiles = Directory.GetFiles(destDir, "*.zip")
+                                    .Select(f => new FileInfo(f))
+                                    .OrderByDescending(f => f.CreationTime)
+                                    .ToList();
+
+            success = zipFiles.Count < maxArchives;
             return success;
         }
 
