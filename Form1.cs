@@ -419,6 +419,7 @@ namespace ArkBuddy
                             Thread.Sleep(30_000);
                         }
                         saveExit();
+                        disableAllComponents();
                     }
 
                     Log.Information("Constructing UPDATE SERVER command");
