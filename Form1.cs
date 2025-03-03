@@ -263,6 +263,11 @@ namespace ArkBuddy
              * start C:\Users\vr\Desktop\arkie2\ShooterGame\Binaries\Win64\ArkAscendedServer.exe Svartalfheim_WP?listen?SessionName=gnomez?ServerPassword=statwhore?Port=7777?QueryPort=27015? 
              * -NoBattlEye -mods=962796,940003,928597,929800,933099,928548,931047,929868,937546,928621,928506,932225,935408,929420,933301,929347
              */
+            if (IsProcessRunning(ARK_PROCESS_NAME))
+            {
+                Log.Information("Server already running");
+                return true;
+            }
             Log.Information("Starting server...");
             var delimiter = "?";
             var serverFolder = textBoxServerFolder.Text;
@@ -333,6 +338,61 @@ namespace ArkBuddy
             return success;
         }
 
+        public bool sendRconCommand(string command)
+        {
+            Log.Information($"Sending RCON command: {command}");
+            disableAllComponents();
+            string rconExePath = textBoxRconFolder.Text;
+            var success = false;
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    Log.Information("Constructing RCON command");
+                    var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
+                    var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
+                    var process = new Process();
+                    process.StartInfo.FileName = Path.Combine(rconExePath, "mcrcon.exe");
+                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} {command}";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+                    bool finishedInTime = process.WaitForExit(30_000);
+
+                    if (finishedInTime && process.ExitCode == 0)
+                    {
+                        Log.Information($"{command} successful");
+                        success = true;
+                    }
+                    else
+                    {
+                        Log.Error($"RCON command {command} timed out");
+                        if (!process.HasExited)
+                            process.Kill();
+                        Log.Debug($"Server save output: {output}");
+                        Log.Debug($"Server save error: {error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Exception during rcon command {command}: {ex.StackTrace}");
+                }
+            });
+
+            Stopwatch timer = Stopwatch.StartNew();
+            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
+            {
+                Application.DoEvents();
+            }
+            enableAllComponents();
+
+            return success;
+        }
+
         public bool updateServer()
         {
             Log.Information("Updating server...");
@@ -344,6 +404,13 @@ namespace ArkBuddy
             {
                 try
                 {
+                    if (IsProcessRunning(ARK_PROCESS_NAME))
+                    {
+                        Log.Information("Server is running - starting save+exit countdown");
+
+                        saveExit();
+                    }
+
                     Log.Information("Constructing UPDATE SERVER command");
                     var process = new Process();
                     process.StartInfo.FileName = Path.Combine(steamCmdFolder, STEAM_CMD_EXE);
@@ -532,99 +599,28 @@ namespace ArkBuddy
 
         public bool saveExit()
         {
-            Log.Information("Saving+exiting server...");
-            disableAllComponents();
-            string rconExePath = textBoxRconFolder.Text;
             var success = false;
-            var task = Task.Run(() =>
+            success = sendRconCommand("SaveWorld");
+            if(success)
             {
-                try
+                sendRconCommand("DoExit");
+                Stopwatch processTimer = Stopwatch.StartNew();
+                while (IsProcessRunning(ARK_PROCESS_NAME) && processTimer.Elapsed.TotalSeconds < 15)
                 {
-                    Log.Information("Constructing RCON command for server SAVE");
-                    var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
-                    var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
-                    var process = new Process();
-                    process.StartInfo.FileName = Path.Combine(rconExePath, "mcrcon.exe");
-                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} SaveWorld";
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.Start();
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
-                    bool finishedInTime = process.WaitForExit(30_000);
-
-                    if (finishedInTime && process.ExitCode == 0)
-                    {
-                        Log.Information($"Server save successful");
-                    }
-                    else
-                    {
-                        Log.Error($"Server save timed out");
-                        if (!process.HasExited)
-                            process.Kill();
-                        Log.Debug($"Server save output: {output}");
-                        Log.Debug($"Server save error: {error}");
-                        return;
-                    }
-
-                    Log.Information("Constructing RCON command for server EXIT");
-                    port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
-                    password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
-                    process = new Process();
-                    process.StartInfo.FileName = Path.Combine(rconExePath, "mcrcon.exe");
-                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} DoExit";
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.Start();
-                    output = process.StandardOutput.ReadToEnd();
-                    error = process.StandardError.ReadToEnd();
-                    finishedInTime = process.WaitForExit(30_000);
-
-                    if (finishedInTime && process.ExitCode == 0)
-                    {
-                        Log.Information($"Server exit command successful");
-                    }
-                    else
-                    {
-                        Log.Error($"Server exit command timed out");
-                        if (!process.HasExited)
-                            process.Kill();
-                        Log.Debug($"Server exit output: {output}");
-                        Log.Debug($"Server exit error: {error}");
-                    }
-
-                    Stopwatch processTimer = Stopwatch.StartNew();
-                    while (IsProcessRunning(ARK_PROCESS_NAME) && processTimer.Elapsed.TotalSeconds < 15)
-                    {
-                        Thread.Sleep(500);
-                    }
-
-                    if (IsProcessRunning(ARK_PROCESS_NAME))
-                    {
-                        Log.Error($"{ARK_PROCESS_NAME} still running :(");
-                    }
-                    else
-                    {
-                        Log.Information($"{ARK_PROCESS_NAME} is NOT running :)");
-                        success = true;
-                    }
+                    Thread.Sleep(500);
                 }
-                catch (Exception ex)
+
+                if (IsProcessRunning(ARK_PROCESS_NAME))
                 {
-                    Log.Error($"Exception during save+exit server: {ex.StackTrace}");
+                    Log.Error($"{ARK_PROCESS_NAME} still running :(");
+                    success = false;
                 }
-            });
-
-            Stopwatch timer = Stopwatch.StartNew();
-            while (!task.IsCompleted && timer.Elapsed.TotalSeconds < 60)
-            {
-                Application.DoEvents();
+                else
+                {
+                    Log.Information($"{ARK_PROCESS_NAME} is NOT running :)");
+                    success = true;
+                }
             }
-            enableAllComponents();
 
             return success;
         }
