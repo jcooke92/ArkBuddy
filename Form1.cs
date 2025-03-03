@@ -32,6 +32,7 @@ namespace ArkBuddy
         public const int MAX_BACKUPS_TO_KEEP = 50;
         public const int AUTO_START_UPDATE_INTERVAL_S = 15 * 60;
         public const int AUTO_BACKUP_INTERVAL_S = 10 * 60;
+        public const int SERVER_SHUTDOWN_TIME_S = 60 * 5;
         public static volatile bool autoStartUpdateEnabled = false;
         public static volatile bool autoBackupEnabled = false;
         public Color GOOD_COLOUR = Color.ForestGreen;
@@ -338,22 +339,26 @@ namespace ArkBuddy
             return success;
         }
 
-        public bool sendRconCommand(string command)
+        public bool _sendRconCommand(string command)
         {
             Log.Information($"Sending RCON command: {command}");
-            disableAllComponents();
             string rconExePath = textBoxRconFolder.Text;
             var success = false;
             var task = Task.Run(() =>
             {
                 try
                 {
+                    if(!IsProcessRunning(ARK_PROCESS_NAME))
+                    {
+                        Log.Information($"Server process not running - skipping RCON command {command}");
+                        return;
+                    }
                     Log.Information("Constructing RCON command");
                     var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
                     var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
                     var process = new Process();
                     process.StartInfo.FileName = Path.Combine(rconExePath, "mcrcon.exe");
-                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} {command}";
+                    process.StartInfo.Arguments = $"-H localhost -P {port} -p {password} \"{command}\"";
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
                     process.StartInfo.UseShellExecute = false;
@@ -388,12 +393,11 @@ namespace ArkBuddy
             {
                 Application.DoEvents();
             }
-            enableAllComponents();
 
             return success;
         }
 
-        public bool updateServer()
+        public bool updateServer(bool immediate=false)
         {
             Log.Information("Updating server...");
             disableAllComponents();
@@ -404,10 +408,16 @@ namespace ArkBuddy
             {
                 try
                 {
-                    if (IsProcessRunning(ARK_PROCESS_NAME))
+                    if (!immediate && IsProcessRunning(ARK_PROCESS_NAME))
                     {
                         Log.Information("Server is running - starting save+exit countdown");
-
+                        var countdownTimer = Stopwatch.StartNew();
+                        while(IsProcessRunning(ARK_PROCESS_NAME) && countdownTimer.Elapsed.TotalSeconds < SERVER_SHUTDOWN_TIME_S)
+                        {
+                            var timeLeft = SERVER_SHUTDOWN_TIME_S -  countdownTimer.Elapsed.TotalSeconds;
+                            _sendRconCommand($"ServerChat ***Server shutting down in {timeLeft:F0} seconds***");
+                            Thread.Sleep(30_000);
+                        }
                         saveExit();
                     }
 
@@ -558,6 +568,11 @@ namespace ArkBuddy
             {
                 try
                 {
+                    if (!IsProcessRunning(ARK_PROCESS_NAME))
+                    {
+                        Log.Information($"Server process not running - skipping RCON open");
+                        return;
+                    }
                     Log.Information("Constructing RCON command for server SAVE");
                     var port = serverConfigData[INI_SERVER_SECTION][INI_RCON_PORT];
                     var password = serverConfigData[INI_SERVER_SECTION][INI_RCON_PASSWORD];
@@ -599,11 +614,12 @@ namespace ArkBuddy
 
         public bool saveExit()
         {
+            Log.Information($"Save+exiting server...");
+            disableAllComponents();
             var success = false;
-            success = sendRconCommand("SaveWorld");
-            if(success)
+            if(_sendRconCommand("SaveWorld"))
             {
-                sendRconCommand("DoExit");
+                _sendRconCommand("DoExit");
                 Stopwatch processTimer = Stopwatch.StartNew();
                 while (IsProcessRunning(ARK_PROCESS_NAME) && processTimer.Elapsed.TotalSeconds < 15)
                 {
@@ -613,7 +629,6 @@ namespace ArkBuddy
                 if (IsProcessRunning(ARK_PROCESS_NAME))
                 {
                     Log.Error($"{ARK_PROCESS_NAME} still running :(");
-                    success = false;
                 }
                 else
                 {
@@ -621,7 +636,7 @@ namespace ArkBuddy
                     success = true;
                 }
             }
-
+            enableAllComponents();
             return success;
         }
 
