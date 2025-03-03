@@ -169,6 +169,7 @@ namespace ArkBuddy
                     try
                     {
                         serverConfigData = parser.ReadFile(serverConfigPath);
+                        success = serverConfigData != null && !string.IsNullOrWhiteSpace(serverConfigData.ToString());
                     }
                     catch (Exception ex)
                     {
@@ -193,6 +194,7 @@ namespace ArkBuddy
 
         public bool saveSettings()
         {
+            Log.Information("Saving program settings...");
             var success = false;
             try
             {
@@ -237,27 +239,6 @@ namespace ArkBuddy
             return success;
         }
 
-        public bool readServerConfigIni()
-        {
-            var success = false;
-            try
-            {
-                var parser = new FileIniDataParser();
-                string filePath = null;
-                textBoxServerConfigINI.Invoke((Action)(() =>
-                {
-                    filePath = textBoxServerConfigINI.Text;
-                }));
-                serverConfigData = parser.ReadFile(filePath);
-                success = serverConfigData != null && !string.IsNullOrWhiteSpace(serverConfigData.ToString());
-            }
-            catch(Exception ex)
-            {
-                Log.Error($"Exception server config INI read: {ex.StackTrace}");
-            }
-            return success;
-        }
-
         public bool startServer()
         {
             /*
@@ -278,6 +259,7 @@ namespace ArkBuddy
             {
                 try
                 {
+                    loadServerConfig();
                     Log.Information("Constructing START SERVER command");
                     var battleye = bool.Parse(serverConfigData[INI_SERVER_SECTION][INI_BATTLEYE]);
                     var modsList = serverConfigData[INI_SERVER_SECTION][INI_MODS_LIST];
@@ -990,7 +972,7 @@ namespace ArkBuddy
         {
             var selectedFile = selectFile("INI files (*.ini)|*.ini|All files (*.*)|*.*");
             textBoxServerConfigINI.Text = string.IsNullOrWhiteSpace(selectedFile) ? "None" : selectedFile;
-            var success = readServerConfigIni();
+            var success = loadServerConfig();
             if(success) 
             {
                 saveSettings();
